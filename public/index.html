@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TASKORA // Futuristic REST API & Task Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Montserrat:wght@600;700;800&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Ambient Background Layers -->
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="orb orb-purple" aria-hidden="true"></div>
+  <div class="orb orb-cyan" aria-hidden="true"></div>
+
+  <!-- Top Navigation -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="brand">
+        <span class="brand-cube"></span>
+        <span class="brand-name">TASKORA<span class="brand-tag">API</span></span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary Navigation">
+        <a href="#workspace">Workspace</a>
+        <a href="#explorer">API Explorer</a>
+        <a href="#documentation">Docs</a>
+        <a href="#about">About</a>
+      </nav>
+
+      <div class="server-pill" id="server-status" title="Live Express Server Connection">
+        <span class="pulse-dot"></span>
+        <span id="server-status-text">Syncing API...</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="eyebrow">
+            <span class="badge-method get">GET</span>
+            <span class="badge-method post">POST</span>
+            <span class="badge-method delete">DELETE</span>
+            <span>NODE.JS + EXPRESS IN-MEMORY ENGINE</span>
+          </div>
+          <h1>Real-Time Task Orchestration Powered by <span class="gradient-text">REST Architecture</span></h1>
+          <p class="hero-subtitle">
+            Every task card, counter, and JSON payload on this dashboard communicates live with your Express backend via <code>fetch()</code>—zero browser storage, 100% server truth.
+          </p>
+          <div class="hero-actions">
+            <a href="#workspace" class="btn btn-primary">Launch Task Studio</a>
+            <a href="#explorer" class="btn btn-ghost">Inspect Live JSON</a>
+          </div>
+        </div>
+
+        <!-- Live Telemetry Summary Card -->
+        <div class="hero-telemetry glass-panel">
+          <div class="telemetry-header">
+            <span>LIVE BACKEND TELEMETRY</span>
+            <span class="mono-chip">/api/tasks</span>
+          </div>
+          <div class="stats-grid" aria-label="Task Statistics">
+            <div class="stat-box">
+              <span class="stat-label">Total Tasks</span>
+              <strong class="stat-value" id="stat-total">0</strong>
+              <span class="stat-foot">In-Memory Array</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Pending</span>
+              <strong class="stat-value cyan-text" id="stat-pending">0</strong>
+              <span class="stat-foot">completed: false</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-label">Completed</span>
+              <strong class="stat-value purple-text" id="stat-completed">0</strong>
+              <span class="stat-foot">completed: true</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Task Studio Workspace -->
+    <section id="workspace" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Task Command Studio</h2>
+            <p>Create new tasks via <code>POST /api/tasks</code> or remove entries via <code>DELETE /api/tasks/:id</code>.</p>
+          </div>
+          <button type="button" id="refresh-tasks-btn" class="btn btn-ghost btn-sm">
+            ↻ Refresh GET
+          </button>
+        </div>
+
+        <!-- Task Creation Bar -->
+        <form id="create-task-form" class="task-form glass-panel" novalidate>
+          <div class="input-group">
+            <label for="task-title-input" class="sr-only">Task Title</label>
+            <input
+              type="text"
+              id="task-title-input"
+              name="title"
+              placeholder="Enter task title (or submit blank to test HTTP 400 validation)..."
+              autocomplete="off"
+            />
+          </div>
+          <button type="submit" id="create-task-btn" class="btn btn-primary">
+            + Create Task (POST)
+          </button>
+        </form>
+
+        <!-- Dynamic Feedback Banner (Loading / Success / Error) -->
+        <div id="feedback-banner" class="feedback-banner hidden" role="status" aria-live="polite">
+          <span id="feedback-badge" class="feedback-badge">INFO</span>
+          <span id="feedback-message">Ready</span>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading-state" class="state-box glass-panel hidden">
+          <div class="spinner" aria-hidden="true"></div>
+          <p>Fetching live task array from <code>GET /api/tasks</code>...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="state-box glass-panel hidden">
+          <div class="empty-icon">◇</div>
+          <h3>In-Memory Array is Empty (<code>[]</code>)</h3>
+          <p>No tasks currently exist on the Express server. Create your first task above to trigger a <code>201 Created</code> response.</p>
+        </div>
+
+        <!-- 3D Floating Task Cards Grid -->
+        <div id="task-grid" class="task-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- Interactive API Endpoint Explorer & Live JSON Viewer -->
+    <section id="explorer" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>Interactive API Endpoint Explorer</h2>
+            <p>Trigger live HTTP requests directly against Express and inspect raw status codes and JSON payloads.</p>
+          </div>
+        </div>
+
+        <div class="explorer-grid">
+          <!-- Left: Endpoint Triggers -->
+          <div class="explorer-controls glass-panel">
+            <!-- GET Control -->
+            <div class="endpoint-card">
+              <div class="endpoint-top">
+                <span class="badge-method get">GET</span>
+                <code>/api/tasks</code>
+              </div>
+              <p>Retrieve all tasks currently stored in server memory.</p>
+              <button type="button" id="explorer-get-btn" class="btn btn-ghost btn-full">
+                Send GET Request
+              </button>
+            </div>
+
+            <!-- POST Control -->
+            <div class="endpoint-card">
+              <div class="endpoint-top">
+                <span class="badge-method post">POST</span>
+                <code>/api/tasks</code>
+              </div>
+              <p>Send a JSON body. Try an empty string <code>""</code> to test <code>400 Bad Request</code>.</p>
+              <label for="explorer-post-body" class="field-label">JSON Request Body</label>
+              <textarea id="explorer-post-body" rows="3" spellcheck="false">{
+  "title": "Verify Express REST Pipeline"
+}</textarea>
+              <button type="button" id="explorer-post-btn" class="btn btn-primary btn-full">
+                Send POST Request
+              </button>
+            </div>
+
+            <!-- DELETE Control -->
+            <div class="endpoint-card">
+              <div class="endpoint-top">
+                <span class="badge-method delete">DELETE</span>
+                <code>/api/tasks/:id</code>
+              </div>
+              <p>Enter a valid task UUID for <code>200 OK</code> or any fake ID to test <code>404 Not Found</code>.</p>
+              <label for="explorer-delete-id" class="field-label">Target Task ID (:id)</label>
+              <input
+                type="text"
+                id="explorer-delete-id"
+                placeholder="Paste task UUID or type missing-id-404"
+                spellcheck="false"
+              />
+              <button type="button" id="explorer-delete-btn" class="btn btn-danger btn-full">
+                Send DELETE Request
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Live JSON Response Console -->
+          <div class="response-console glass-panel">
+            <div class="console-header">
+              <div class="console-meta">
+                <span class="console-title">LIVE JSON RESPONSE</span>
+                <span id="response-route" class="mono-chip">GET /api/tasks</span>
+              </div>
+              <div class="console-actions">
+                <span id="http-status-badge" class="status-pill status-neutral">WAITING</span>
+                <button type="button" id="copy-json-btn" class="btn btn-ghost btn-sm">
+                  Copy JSON
+                </button>
+              </div>
+            </div>
+            <pre id="json-output" class="json-viewer">{
+  "info": "Execute any task action or API Explorer trigger to inspect live server JSON."
+}</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- API Documentation Section -->
+    <section id="documentation" class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <h2>REST API Reference</h2>
+            <p>Standardized JSON contract exposed by <code>server.js</code> on port <code>3000</code>.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap glass-panel">
+          <table class="docs-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Endpoint</th>
+                <th>Request Body / Param</th>
+                <th>Success Code</th>
+                <th>Error Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge-method get">GET</span></td>
+                <td><code>/api/tasks</code></td>
+                <td>None (returns <code>[]</code> if empty)</td>
+                <td><code>200 OK</code></td>
+                <td><code>500 Server Error</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge-method post">POST</span></td>
+                <td><code>/api/tasks</code></td>
+                <td><code>{ "title": "Non-empty string" }</code></td>
+                <td><code>201 Created</code></td>
+                <td><code>400 Bad Request</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge-method delete">DELETE</span></td>
+                <td><code>/api/tasks/:id</code></td>
+                <td>URL Parameter <code>:id</code> (UUID)</td>
+                <td><code>200 OK</code></td>
+                <td><code>404 Not Found</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Architecture Section -->
+    <section id="about" class="section">
+      <div class="container">
+        <div class="about-card glass-panel">
+          <div>
+            <span class="mono-chip">WEBORA TEC INTERNSHIP // WEEK 4 TASK 2</span>
+            <h2>About TASKORA API Architecture</h2>
+            <p>
+              TASKORA demonstrates clean client-server separation using <strong>Node.js</strong> and <strong>Express.js</strong>. Instead of persisting state inside browser storage, the frontend relies exclusively on asynchronous <code>fetch()</code> calls to synchronize with an in-memory JavaScript array on the server.
+            </p>
+            <p class="about-note">
+              <strong>Note on In-Memory Persistence:</strong> Because tasks are stored directly in server RAM for zero-latency operations, restarting the Node.js process resets the task array back to <code>[]</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span>TASKORA API • Built with Node.js, Express & Vanilla JS</span>
+      <span>Webora Tec Internship Portfolio Project</span>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
